@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Life Garden">
+<meta name="theme-color" content="#A5B89E">
+
+<style>
+/* Self-contained fonts - no external requests */
+:root{--loaded:1}
+</style>
+<title>My Life Garden OS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+:root{
+  /* Exact palette from design doc */
+  --sage:#A5B89E;
+  --moss:#7E9F7D;
+  --moss-dark:#5a7a5a;
+  --cream:#F3E8DB;
+  --ivory:#F7F2EC;
+  --beige:#E7C7B3;
+  --dusty-pink:#D99A8B;
+  --terra:#C5896A;
+  --peach:#E7C7B3;
+  --clay:#B87B5E;
+  --mushroom:#B78B6F;
+  --olive:#C5D1B9;
+  --gray-green:#9CA3AF;
+  --warm-white:#FAF6F0;
+  --card-bg:#F8F3EC;
+  --card-shadow: 0 4px 20px rgba(100,80,60,0.10), 0 1px 4px rgba(100,80,60,0.07);
+  --card-shadow-sm: 0 2px 10px rgba(100,80,60,0.08);
+  --text-dark:#3D2E22;
+  --text-mid:#7A6050;
+  --text-light:#A89080;
+  --font-serif:Georgia,'Times New Roman',serif;
+  --font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+}
+
+body{
+  font-family:var(--font-sans);
+  background:var(--warm-white);
+  color:var(--text-dark);
+  min-height:100vh;
+  overflow-x:hidden;
+  user-select:none;
+  overscroll-behavior:none;
+}
+
+/* SCREENS */
+.screen{display:none;flex-direction:column;height:100vh;height:100dvh;background:var(--warm-white)}
+#home{display:flex}
+.screen.active{display:flex}
+
+/* STATUS BAR AREA */
+.status-bar{
+  height:max(44px, calc(44px + env(safe-area-inset-top)));
+  padding-top:env(safe-area-inset-top);
+  background:var(--ivory);
+  display:flex;align-items:flex-end;justify-content:space-between;
+  padding-left:20px;padding-right:20px;padding-bottom:8px;
+  flex-shrink:0;
+}
+.status-time{font-family:var(--font-sans);font-size:12px;font-weight:600;color:var(--text-mid)}
+.status-icons{display:flex;align-items:center;gap:4px}
+.sync-pill{display:flex;align-items:center;gap:4px;background:rgba(165,184,158,0.2);padding:3px 8px;border-radius:20px}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:#FFD93D;transition:background 0.4s}
+.sync-dot.synced{background:#A5B89E}
+.sync-dot.error{background:var(--dusty-pink)}
+.sync-text{font-size:9px;color:var(--text-light);font-family:var(--font-sans)}
+
+/* HOME SCREEN */
+#home{background:var(--ivory)}
+.home-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 100px}
+
+/* DESK WALLPAPER HEADER */
+.desk-header{
+  background:linear-gradient(180deg, #E8D5C4 0%, #F0E4D4 60%, var(--ivory) 100%);
+  padding:20px 20px 0;
+  position:relative;
+  overflow:hidden;
+}
+.desk-header::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 80% 20%, rgba(197,137,106,0.12) 0%, transparent 60%),
+             radial-gradient(ellipse at 20% 80%, rgba(126,159,125,0.10) 0%, transparent 50%);
+}
+.desk-top{position:relative;z-index:1;margin-bottom:16px}
+.greeting-label{font-size:11px;color:var(--text-light);font-family:var(--font-sans);font-weight:500;margin-bottom:2px}
+.greeting-name{font-family:var(--font-serif);font-size:24px;color:var(--text-dark);line-height:1.2}
+.greeting-sub{font-size:12px;color:var(--text-mid);margin-top:3px;font-family:var(--font-sans)}
+
+/* MOOD CHIP */
+.mood-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,0.7);
+  border:1px solid rgba(165,184,158,0.3);
+  border-radius:20px;padding:5px 12px;
+  margin-top:8px;cursor:pointer;
+  backdrop-filter:blur(8px);
+}
+.mood-chip-icon{font-size:14px}
+.mood-chip-text{font-size:11px;color:var(--text-mid);font-family:var(--font-sans);font-weight:500}
+
+/* MUSHROOM PET */
+.pet-area{position:relative;height:90px;margin:0 -20px}
+.mushroom-pet{
+  position:absolute;bottom:0;right:24px;
+  font-size:64px;
+  animation:pet-bob 4s ease-in-out infinite;
+  cursor:pointer;filter:drop-shadow(0 4px 8px rgba(100,60,30,0.15));
+  transition:transform 0.2s;
+}
+.mushroom-pet:active{transform:scale(0.9)}
+@keyframes pet-bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
+.pet-bubble{
+  position:absolute;bottom:70px;right:88px;
+  background:white;border-radius:12px 12px 0 12px;
+  padding:6px 10px;font-size:10px;color:var(--text-mid);
+  box-shadow:var(--card-shadow-sm);
+  opacity:0;transition:opacity 0.3s;pointer-events:none;
+  font-family:var(--font-sans);white-space:nowrap;
+}
+.pet-bubble.show{opacity:1}
+
+/* APP ICONS GRID */
+.home-section{padding:0 16px;margin-bottom:20px}
+.section-eyebrow{font-size:10px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-family:var(--font-sans)}
+
+.app-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.app-icon{
+  background:var(--card-bg);
+  border-radius:24px;
+  padding:18px 16px 14px;
+  cursor:pointer;
+  box-shadow:var(--card-shadow);
+  transition:transform 0.15s,box-shadow 0.15s;
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+  border:1px solid rgba(255,255,255,0.8);
+  position:relative;overflow:hidden;
+}
+.app-icon::before{content:'';position:absolute;inset:0;border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,transparent 60%)}
+.app-icon:active{transform:scale(0.96);box-shadow:var(--card-shadow-sm)}
+.app-icon .app-emoji{font-size:36px;line-height:1}
+.app-icon .app-name{font-family:var(--font-serif);font-size:15px;color:var(--text-dark);font-weight:600}
+.app-icon .app-sub{font-size:10px;color:var(--text-light);font-family:var(--font-sans);font-weight:400}
+.app-icon.schedule{background:linear-gradient(135deg,#EFF5EC 0%,#E2EEE0 100%)}
+.app-icon.finance{background:linear-gradient(135deg,#F5EFE4 0%,#EDE4D4 100%)}
+.app-icon.food{background:linear-gradient(135deg,#FAF0E8 0%,#F2E4D8 100%)}
+.app-icon.journal{background:linear-gradient(135deg,#F0EBF5 0%,#E8E0F0 100%)}
+
+/* QUEST CARD */
+.quest-card{
+  background:var(--card-bg);
+  border-radius:24px;
+  padding:18px;
+  box-shadow:var(--card-shadow);
+  border:1px solid rgba(255,255,255,0.8);
+}
+.quest-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.quest-card-title{font-family:var(--font-serif);font-size:16px;color:var(--text-dark)}
+.xp-pill{background:linear-gradient(135deg,var(--terra),var(--dusty-pink));color:white;font-size:10px;padding:3px 10px;border-radius:20px;font-family:var(--font-sans);font-weight:600}
+
+.quest-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(165,184,158,0.15);cursor:pointer}
+.quest-row:last-child{border-bottom:none}
+.q-check{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--olive);background:white;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s}
+.q-check.done{background:var(--sage);border-color:var(--sage)}
+.q-check.done::after{content:'✓';color:white;font-size:11px;font-weight:700}
+.q-text{font-size:13px;color:var(--text-dark);font-family:var(--font-sans);flex:1}
+.q-text.done{text-decoration:line-through;color:var(--text-light)}
+.q-dot{width:6px;height:6px;border-radius:50%}
+.q-high{background:var(--terra)} .q-med{background:var(--peach)} .q-low{background:var(--olive)}
+
+.progress-track{height:8px;background:rgba(165,184,158,0.2);border-radius:4px;margin-top:12px;overflow:hidden}
+.progress-thumb{height:100%;background:linear-gradient(90deg,var(--sage),var(--moss));border-radius:4px;transition:width 0.6s cubic-bezier(0.34,1.56,0.64,1)}
+
+/* PLANT ROW */
+.plant-scroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.plant-scroll::-webkit-scrollbar{display:none}
+.plant-pot{flex-shrink:0;background:var(--card-bg);border-radius:16px;padding:12px 14px;text-align:center;box-shadow:var(--card-shadow-sm);border:1px solid rgba(255,255,255,0.8);min-width:72px}
+.plant-pot .pot-plant{font-size:24px}
+.plant-pot .pot-name{font-size:9px;color:var(--text-light);margin-top:4px;font-family:var(--font-sans);font-weight:500}
+.pot-bar{height:4px;background:rgba(165,184,158,0.2);border-radius:2px;margin-top:6px}
+.pot-fill{height:100%;background:var(--sage);border-radius:2px;transition:width 0.5s}
+
+/* BOTTOM NAV */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(248,243,236,0.95);
+  backdrop-filter:blur(20px);
+  border-top:1px solid rgba(165,184,158,0.2);
+  padding:8px 0;
+  padding-bottom:max(8px,env(safe-area-inset-bottom));
+  display:flex;justify-content:space-around;
+  z-index:50;
+}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 14px;border-radius:16px;transition:background 0.2s;min-width:60px}
+.nav-btn:active{background:rgba(165,184,158,0.2)}
+.nav-btn.active{background:rgba(165,184,158,0.15)}
+.nav-btn .nav-icon{font-size:22px;transition:transform 0.2s}
+.nav-btn.active .nav-icon{transform:scale(1.1)}
+.nav-btn .nav-label{font-size:9px;font-weight:600;color:var(--text-light);font-family:var(--font-sans);letter-spacing:0.3px}
+.nav-btn.active .nav-label{color:var(--moss-dark)}
+
+/* SECTION SCREENS */
+.section-header-bar{
+  background:var(--ivory);
+  padding:16px 20px 0;
+  padding-top:max(16px,calc(env(safe-area-inset-top) + 8px));
+  flex-shrink:0;
+  border-bottom:1px solid rgba(165,184,158,0.15);
+  padding-bottom:16px;
+}
+.back-btn{display:flex;align-items:center;gap:4px;cursor:pointer;margin-bottom:8px}
+.back-btn span{font-size:11px;color:var(--text-light);font-family:var(--font-sans);font-weight:500}
+.section-title{font-family:var(--font-serif);font-size:26px;color:var(--text-dark);line-height:1.1}
+.section-subtitle{font-size:12px;color:var(--text-light);margin-top:3px;font-family:var(--font-sans)}
+.section-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 100px}
+
+/* CARDS */
+.card{background:var(--card-bg);border-radius:20px;padding:16px;margin-bottom:12px;box-shadow:var(--card-shadow);border:1px solid rgba(255,255,255,0.8)}
+.card-title{font-family:var(--font-serif);font-size:15px;color:var(--text-dark);margin-bottom:12px}
+
+/* INPUTS */
+.garden-input{
+  width:100%;padding:11px 14px;
+  border:1.5px solid rgba(165,184,158,0.3);
+  border-radius:14px;background:white;
+  font-size:14px;font-family:var(--font-sans);
+  color:var(--text-dark);outline:none;
+  transition:border-color 0.2s,box-shadow 0.2s;
+}
+.garden-input:focus{border-color:var(--sage);box-shadow:0 0 0 3px rgba(165,184,158,0.15)}
+.garden-input::placeholder{color:var(--text-light)}
+
+/* BUTTONS */
+.btn-primary{
+  background:linear-gradient(135deg,var(--sage),var(--moss));
+  color:white;border:none;border-radius:14px;
+  padding:11px 20px;font-size:13px;font-weight:600;
+  font-family:var(--font-sans);cursor:pointer;
+  box-shadow:0 4px 12px rgba(126,159,125,0.3);
+  transition:transform 0.15s,box-shadow 0.15s;
+}
+.btn-primary:active{transform:scale(0.97);box-shadow:0 2px 6px rgba(126,159,125,0.2)}
+.btn-terra{background:linear-gradient(135deg,var(--terra),var(--clay));box-shadow:0 4px 12px rgba(197,137,106,0.3)}
+.btn-lav{background:linear-gradient(135deg,#C4B0D8,#A896C0);box-shadow:0 4px 12px rgba(196,176,216,0.3)}
+.btn-full{width:100%;margin-top:10px}
+.add-row{display:flex;gap:8px;margin-bottom:12px}
+
+/* SCHEDULE TABS */
+.tab-row{display:flex;gap:6px;margin-bottom:16px;background:rgba(165,184,158,0.1);padding:4px;border-radius:14px}
+.tab-btn{flex:1;padding:7px;border:none;background:transparent;border-radius:10px;font-size:12px;font-weight:600;font-family:var(--font-sans);color:var(--text-light);cursor:pointer;transition:all 0.2s}
+.tab-btn.active{background:white;color:var(--moss-dark);box-shadow:0 2px 8px rgba(100,80,60,0.1)}
+
+/* TODAY VIEW — task list */
+.task-item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid rgba(165,184,158,0.12);cursor:pointer}
+.task-item:last-child{border-bottom:none}
+.task-cb{width:22px;height:22px;border-radius:7px;border:1.5px solid rgba(165,184,158,0.5);background:white;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s}
+.task-cb.done{background:var(--sage);border-color:var(--sage)}
+.task-cb.done::after{content:'✓';color:white;font-size:12px;font-weight:700}
+.task-text{font-size:14px;color:var(--text-dark);font-family:var(--font-sans);flex:1}
+.task-text.done{text-decoration:line-through;color:var(--text-light)}
+.prio-dot{width:7px;height:7px;border-radius:50%}
+
+/* Action icon buttons */
+.icon-btn{background:transparent;border:none;font-size:15px;cursor:pointer;padding:4px 6px;border-radius:8px;color:var(--text-light);font-family:inherit;transition:background 0.15s}
+.icon-btn:active{background:rgba(165,184,158,0.2)}
+.del-btn{color:var(--dusty-pink)}
+.del-btn:active{background:rgba(217,154,139,0.15)}
+
+/* Empty week cell tap target */
+.wg-empty-cell{position:absolute;inset:0;cursor:pointer}
+.wg-empty-cell:active{background:rgba(165,184,158,0.15);border-radius:6px}
+
+/* Hold ripple */
+@keyframes ripple-grow{0%{transform:scale(0);opacity:0.8}100%{transform:scale(3);opacity:0}}
+
+/* WEEK VIEW — time-block grid */
+.week-view{display:none}
+.week-view.active{display:block}
+.week-grid-wrap{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.week-grid-wrap::-webkit-scrollbar{display:none}
+.week-grid-table{min-width:500px;border-collapse:collapse}
+.wg-corner{width:44px}
+.wg-day-head{font-size:11px;font-weight:700;color:var(--text-mid);font-family:var(--font-sans);text-align:center;padding:8px 4px;min-width:72px}
+.wg-day-head.today-col{color:var(--moss-dark)}
+.wg-day-num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:13px;font-weight:700;margin-top:2px}
+.wg-day-num.today-num{background:var(--sage);color:white}
+.wg-time-label{font-size:10px;color:var(--text-light);font-family:var(--font-sans);padding:0 8px 0 0;text-align:right;vertical-align:top;padding-top:6px;white-space:nowrap;width:44px}
+.wg-cell{border-top:1px solid rgba(165,184,158,0.15);padding:2px 3px;vertical-align:top;height:52px;position:relative}
+.wg-cell.today-col{background:rgba(165,184,158,0.04)}
+.wg-block{border-radius:10px;padding:5px 7px;font-size:10px;font-weight:600;font-family:var(--font-sans);cursor:pointer;position:absolute;left:3px;right:3px;top:3px;bottom:3px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.3;transition:transform 0.15s}
+.wg-block:active{transform:scale(0.96)}
+.wg-pink{background:#F5C4C4;color:#8B3333}
+.wg-green{background:#B8D4B0;color:#2D5A27}
+.wg-terra{background:#F0C4A8;color:#7A3C1A}
+.wg-lav{background:#D4C4E8;color:#4A2878}
+.wg-sage{background:#C4D8C0;color:#2A5025}
+
+/* MONTH VIEW */
+.month-view{display:none}
+.month-view.active{display:block}
+.month-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.month-title{font-family:var(--r-serif,var(--font-serif));font-size:20px;color:var(--text-dark)}
+.month-nav{width:32px;height:32px;border-radius:50%;border:1.5px solid rgba(165,184,158,0.35);background:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-mid)}
+.month-cal{width:100%}
+.mc-head{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px}
+.mc-dname{font-size:10px;font-weight:700;color:var(--text-light);font-family:var(--font-sans);text-align:center;padding:4px 0}
+.mc-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.mc-day{font-size:12px;font-family:var(--font-sans);font-weight:500;text-align:center;padding:7px 2px;border-radius:10px;color:var(--text-light);cursor:pointer;transition:background 0.15s}
+.mc-day.this-month{color:var(--text-dark)}
+.mc-day.today{background:var(--sage);color:white;font-weight:700}
+.mc-day.has-tasks{position:relative}
+.mc-day.has-tasks::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--terra)}
+.mc-day.selected{background:rgba(165,184,158,0.25);color:var(--moss-dark)}
+.today-tasks-card{background:var(--card-bg);border-radius:20px;padding:16px;box-shadow:var(--card-shadow);border:1px solid rgba(255,255,255,0.8);margin-top:14px}
+.ttc-header{font-family:var(--font-serif);font-size:15px;color:var(--text-dark);margin-bottom:12px}
+.tl-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(165,184,158,0.12);cursor:pointer}
+.tl-item:last-child{border-bottom:none}
+.tl-dot{width:12px;height:12px;border-radius:50%;border:2px solid;flex-shrink:0}
+.tl-dot.done{background:var(--sage);border-color:var(--sage)}
+.tl-dot.pending{background:transparent;border-color:rgba(165,184,158,0.6)}
+.tl-info{flex:1}
+.tl-name{font-size:13px;font-family:var(--font-sans);color:var(--text-dark)}
+.tl-name.done{text-decoration:line-through;color:var(--text-light)}
+.tl-time{font-size:10px;color:var(--text-light);margin-top:1px}
+.tl-badge{font-size:9px;font-weight:700;padding:3px 8px;border-radius:10px;font-family:var(--font-sans)}
+.tl-done-badge{background:rgba(165,184,158,0.2);color:var(--moss-dark)}
+.tl-prog-badge{background:rgba(231,199,179,0.4);color:var(--clay)}
+
+/* FINANCE */
+.budget-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid rgba(165,184,158,0.12)}
+.budget-row:last-child{border-bottom:none}
+.b-icon{font-size:24px;flex-shrink:0}
+.b-info{flex:1}
+.b-name{font-size:13px;color:var(--text-dark);font-family:var(--font-sans);font-weight:500;margin-bottom:5px}
+.b-track{height:7px;background:rgba(165,184,158,0.15);border-radius:4px;overflow:hidden}
+.b-fill{height:100%;border-radius:4px}
+.b-green{background:linear-gradient(90deg,var(--sage),var(--moss))}
+.b-yellow{background:linear-gradient(90deg,#D4B896,var(--terra))}
+.b-red{background:linear-gradient(90deg,var(--dusty-pink),var(--clay))}
+.b-amt{font-size:11px;color:var(--text-light);font-family:var(--font-sans);text-align:right;flex-shrink:0;min-width:70px}
+
+.jar-strip{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.jar-strip::-webkit-scrollbar{display:none}
+.jar-item{flex-shrink:0;text-align:center;min-width:76px;background:var(--card-bg);border-radius:16px;padding:12px 8px;box-shadow:var(--card-shadow-sm);border:1px solid rgba(255,255,255,0.8)}
+.jar-emoji{font-size:28px}
+.jar-label{font-size:9px;color:var(--text-light);margin-top:4px;font-family:var(--font-sans);font-weight:500}
+.jar-pct{font-size:12px;font-weight:700;color:var(--moss-dark);margin-top:2px;font-family:var(--font-sans)}
+
+.exp-quick{display:flex;gap:8px;align-items:center}
+.exp-amt-input{width:90px;padding:10px 12px;border:1.5px solid rgba(165,184,158,0.3);border-radius:12px;font-size:14px;font-family:var(--font-sans);background:white;color:var(--text-dark);outline:none}
+.exp-amt-input:focus{border-color:var(--terra)}
+.exp-cat-select{flex:1;padding:10px 12px;border:1.5px solid rgba(165,184,158,0.3);border-radius:12px;font-size:13px;font-family:var(--font-sans);background:white;color:var(--text-dark);outline:none;-webkit-appearance:none}
+.exp-log-item{font-size:12px;color:var(--text-light);padding:4px 0;font-family:var(--font-sans);display:flex;justify-content:space-between}
+
+/* FOOD */
+.cat-strip{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin-bottom:14px}
+.cat-strip::-webkit-scrollbar{display:none}
+.cat-chip{flex-shrink:0;padding:7px 16px;border-radius:20px;border:1.5px solid rgba(165,184,158,0.3);background:white;font-size:12px;font-family:var(--font-sans);font-weight:500;color:var(--text-mid);cursor:pointer;transition:all 0.2s}
+.cat-chip.active{background:var(--terra);border-color:var(--terra);color:white}
+
+.recipe-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid rgba(165,184,158,0.12);cursor:pointer}
+.recipe-row:last-child{border-bottom:none}
+.recipe-emoji{font-size:28px}
+.recipe-info{flex:1}
+.recipe-name{font-size:14px;color:var(--text-dark);font-family:var(--font-sans);font-weight:500}
+.recipe-tag{font-size:11px;color:var(--text-light);margin-top:2px}
+.recipe-heart{font-size:18px;cursor:pointer;transition:transform 0.2s}
+.recipe-heart:active{transform:scale(1.3)}
+
+.grocery-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(165,184,158,0.12);cursor:pointer}
+.grocery-row:last-child{border-bottom:none}
+.g-box{width:20px;height:20px;border-radius:6px;border:1.5px solid rgba(197,137,106,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s}
+.g-box.done{background:var(--terra);border-color:var(--terra);color:white;font-size:11px;font-weight:700}
+.g-label{font-size:13px;font-family:var(--font-sans);color:var(--text-dark)}
+.g-label.done{text-decoration:line-through;color:var(--text-light)}
+
+/* JOURNAL */
+.mood-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.mood-tile{padding:12px 6px;border-radius:16px;border:1.5px solid rgba(165,184,158,0.2);background:white;text-align:center;cursor:pointer;transition:all 0.2s}
+.mood-tile.selected{background:rgba(165,184,158,0.15);border-color:var(--sage)}
+.mood-tile .mood-emoji{font-size:24px}
+.mood-tile .mood-word{font-size:9px;color:var(--text-light);margin-top:4px;font-family:var(--font-sans);font-weight:500}
+
+.journal-area{width:100%;min-height:110px;padding:14px;border:1.5px solid rgba(165,184,158,0.25);border-radius:16px;font-size:14px;font-family:var(--font-sans);color:var(--text-dark);background:white;outline:none;resize:none;line-height:1.65;transition:border-color 0.2s}
+.journal-area:focus{border-color:rgba(165,184,158,0.6);box-shadow:0 0 0 3px rgba(165,184,158,0.1)}
+.journal-area::placeholder{color:var(--text-light);font-style:italic}
+
+.folder-strip{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin-bottom:14px}
+.folder-strip::-webkit-scrollbar{display:none}
+.folder-chip{flex-shrink:0;padding:7px 14px;border-radius:20px;border:1.5px solid rgba(165,184,158,0.25);background:white;font-size:12px;font-family:var(--font-sans);font-weight:500;color:var(--text-mid);cursor:pointer;transition:all 0.2s}
+.folder-chip.active{background:rgba(196,176,216,0.25);border-color:#C4B0D8;color:#7A5A9A}
+
+.entry-item{padding:13px 0;border-bottom:1px solid rgba(165,184,158,0.12)}
+.entry-item:last-child{border-bottom:none}
+.entry-meta{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.entry-date{font-size:10px;color:var(--text-light);font-family:var(--font-sans);font-weight:500}
+.entry-mood-tag{font-size:12px}
+.entry-body{font-size:13px;color:var(--text-dark);line-height:1.55;font-family:var(--font-sans)}
+
+/* MOOD PICKER OVERLAY */
+.mood-overlay{
+  position:fixed;inset:0;background:rgba(61,46,34,0.4);
+  display:flex;align-items:flex-end;z-index:100;
+  opacity:0;pointer-events:none;transition:opacity 0.3s;
+  backdrop-filter:blur(4px);
+}
+.mood-overlay.show{opacity:1;pointer-events:all}
+.mood-sheet{
+  background:var(--ivory);border-radius:28px 28px 0 0;
+  padding:20px 20px calc(20px + env(safe-area-inset-bottom));
+  width:100%;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.34,1.3,0.64,1);
+}
+.mood-overlay.show .mood-sheet{transform:translateY(0)}
+.mood-sheet-title{font-family:var(--font-serif);font-size:20px;color:var(--text-dark);margin-bottom:16px;text-align:center}
+.mood-big-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+.mood-big-btn{padding:14px 4px;border-radius:16px;border:1.5px solid rgba(165,184,158,0.2);background:white;text-align:center;cursor:pointer;transition:all 0.2s}
+.mood-big-btn.selected{background:rgba(165,184,158,0.2);border-color:var(--sage)}
+.mood-big-btn .mbe{font-size:26px}
+.mood-big-btn .mbl{font-size:9px;color:var(--text-light);margin-top:5px;font-family:var(--font-sans);font-weight:500}
+
+/* LEAF BURST ANIMATION */
+.leaf-burst{
+  position:fixed;pointer-events:none;z-index:200;
+  font-size:18px;animation:leaf-fly 0.8s ease-out forwards;
+}
+@keyframes leaf-fly{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(0.5)}}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+  background:var(--text-dark);color:white;
+  padding:10px 22px;border-radius:20px;
+  font-size:12px;font-family:var(--font-sans);font-weight:500;
+  opacity:0;pointer-events:none;transition:opacity 0.3s;z-index:150;
+  white-space:nowrap;box-shadow:0 4px 16px rgba(61,46,34,0.2);
+}
+.toast.show{opacity:1}
+
+
+</style>
+</head>
+<body>
+
+
+
+
+<!-- ═══════════════════════ HOME ═══════════════════════ -->
+<div class="screen" id="home">
+  <div class="home-scroll">
+
+    <div class="desk-header">
+      <div class="desk-top">
+        <p class="greeting-label" id="today-date">Today</p>
+        <h1 class="greeting-name" id="greeting-text">Good morning, Max</h1>
+        <p class="greeting-sub">Let's take care of you today ♡</p>
+        <div class="mood-chip" onclick="openMoodPicker()" id="mood-chip">
+          <span class="mood-chip-icon" id="mood-chip-icon">🌿</span>
+          <span class="mood-chip-text" id="mood-chip-text">How are you feeling?</span>
+        </div>
+      </div>
+      <div class="pet-area">
+        <div class="mushroom-pet" id="pet" onclick="petTap()">🍄</div>
+        <div class="pet-bubble" id="pet-bubble">hiii ♡</div>
+      </div>
+    </div>
+
+    <div style="padding:20px 16px 0">
+
+      <p class="section-eyebrow">your life garden</p>
+      <div class="app-grid" style="margin-bottom:20px">
+        <div class="app-icon schedule" onclick="goTo('schedule')">
+          <span class="app-emoji">🌿</span>
+          <span class="app-name">Schedule</span>
+          <span class="app-sub" id="home-task-count">loading...</span>
+        </div>
+        <div class="app-icon finance" onclick="goTo('finance')">
+          <span class="app-emoji">🫙</span>
+          <span class="app-name">Finance</span>
+          <span class="app-sub">Budget garden</span>
+        </div>
+        <div class="app-icon food" onclick="goTo('food')">
+          <span class="app-emoji">🍓</span>
+          <span class="app-name">Food</span>
+          <span class="app-sub">Recipe box</span>
+        </div>
+        <div class="app-icon journal" onclick="goTo('journal')">
+          <span class="app-emoji">📔</span>
+          <span class="app-name">Journal</span>
+          <span class="app-sub" id="home-entry-count">Write today</span>
+        </div>
+      </div>
+
+      <p class="section-eyebrow">today's quests</p>
+      <div class="quest-card" style="margin-bottom:20px">
+        <div class="quest-card-header">
+          <span class="quest-card-title">🌟 Daily Quest Board</span>
+          <span class="xp-pill" id="xp-badge">+0 XP</span>
+        </div>
+        <div id="home-quests"></div>
+        <div class="progress-track"><div class="progress-thumb" id="home-progress" style="width:0%"></div></div>
+      </div>
+
+      <p class="section-eyebrow">your growing plants</p>
+      <div class="plant-scroll">
+        <div class="plant-pot"><div class="pot-plant">🌱</div><div class="pot-name">Schedule</div><div class="pot-bar"><div class="pot-fill" id="plant-sched" style="width:0%"></div></div></div>
+        <div class="plant-pot"><div class="pot-plant">🌿</div><div class="pot-name">Finance</div><div class="pot-bar"><div class="pot-fill" style="width:80%"></div></div></div>
+        <div class="plant-pot"><div class="pot-plant">🌸</div><div class="pot-name">Food</div><div class="pot-bar"><div class="pot-fill" style="width:40%"></div></div></div>
+        <div class="plant-pot"><div class="pot-plant">🌺</div><div class="pot-name">Journal</div><div class="pot-bar"><div class="pot-fill" id="plant-journal" style="width:20%"></div></div></div>
+        <div class="plant-pot"><div class="pot-plant">🍀</div><div class="pot-name">Savings</div><div class="pot-bar"><div class="pot-fill" style="width:30%"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <div class="nav-btn active" onclick="goTo('home')"><span class="nav-icon">🏡</span><span class="nav-label">Home</span></div>
+    <div class="nav-btn" onclick="goTo('schedule')"><span class="nav-icon">🌿</span><span class="nav-label">Schedule</span></div>
+    <div class="nav-btn" onclick="goTo('finance')"><span class="nav-icon">🫙</span><span class="nav-label">Finance</span></div>
+    <div class="nav-btn" onclick="goTo('food')"><span class="nav-icon">🍓</span><span class="nav-label">Food</span></div>
+    <div class="nav-btn" onclick="goTo('journal')"><span class="nav-icon">📔</span><span class="nav-label">Journal</span></div>
+  </nav>
+</div>
+
+<!-- ═══ SCHEDULE ═══ -->
+<div class="screen" id="schedule">
+  <div class="section-header-bar">
+    <div class="back-btn" onclick="goTo('home')"><span>← back to garden</span></div>
+    <h2 class="section-title">📅 Schedule</h2>
+    <p class="section-subtitle">Your daily quest board</p>
+  </div>
+  <div class="section-scroll">
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchSchedTab('today',this)">Today</button>
+      <button class="tab-btn" onclick="switchSchedTab('week',this)">Week</button>
+      <button class="tab-btn" onclick="switchSchedTab('month',this)">Month</button>
+    </div>
+    <!-- TODAY TAB -->
+    <div id="sched-today">
+      <div class="card">
+        <div class="add-row">
+          <input class="garden-input" id="task-input" placeholder="Add a new quest..." type="text" style="flex:1">
+          <button class="btn-primary" onclick="addTask()" style="flex-shrink:0">+ Add</button>
+        </div>
+        <div id="task-list"></div>
+        <div class="progress-track" style="margin-top:14px"><div class="progress-thumb" id="sched-progress" style="width:0%"></div></div>
+        <p style="font-size:11px;color:var(--text-light);margin-top:6px;text-align:right;font-family:var(--font-sans)" id="sched-label">0 of 0 complete</p>
+      </div>
+    </div>
+
+    <!-- WEEK TAB -->
+    <div id="sched-week" style="display:none">
+      <div class="card" style="padding:12px 8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding:0 4px">
+          <span style="font-family:var(--font-serif);font-size:14px;color:var(--text-dark)">This week</span>
+          <span style="font-size:10px;color:var(--text-light);font-family:var(--font-sans)">Hold any cell to add</span>
+        </div>
+        <div class="week-grid-wrap"><table class="week-grid-table" id="week-block-grid"></table></div>
+      </div>
+    </div>
+
+    <!-- MONTH TAB -->
+    <div id="sched-month" style="display:none">
+      <div class="card">
+        <div class="month-header">
+          <button class="month-nav" onclick="changeMonth(-1)">‹</button>
+          <span class="month-title" id="month-title">June 2026</span>
+          <button class="month-nav" onclick="changeMonth(1)">›</button>
+        </div>
+        <div class="mc-head" id="mc-head"></div>
+        <div class="mc-days" id="mc-days"></div>
+      </div>
+      <div class="today-tasks-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <p class="ttc-header" id="selected-day-label" style="margin-bottom:0">Today</p>
+          <span style="font-size:10px;color:var(--text-light);font-family:var(--font-sans)">Hold calendar day to add event</span>
+        </div>
+        <div id="month-task-list"></div>
+        <div class="add-row" style="margin-top:10px;margin-bottom:0">
+          <input class="garden-input" id="task-input-month" placeholder="Add a quest for this day..." type="text" style="flex:1">
+          <button class="btn-primary" onclick="addTask('month')" style="flex-shrink:0">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+    <div class="nav-btn" onclick="goTo('home')"><span class="nav-icon">🏡</span><span class="nav-label">Home</span></div>
+    <div class="nav-btn" onclick="goTo('schedule')"><span class="nav-icon">🌿</span><span class="nav-label">Schedule</span></div>
+    <div class="nav-btn" onclick="goTo('finance')"><span class="nav-icon">🫙</span><span class="nav-label">Finance</span></div>
+    <div class="nav-btn" onclick="goTo('food')"><span class="nav-icon">🍓</span><span class="nav-label">Food</span></div>
+    <div class="nav-btn" onclick="goTo('journal')"><span class="nav-icon">📔</span><span class="nav-label">Journal</span></div>
+  </nav>
+</div>
+
+<!-- ═══ FINANCE ═══ -->
+<div class="screen" id="finance">
+  <div class="section-header-bar">
+    <div class="back-btn" onclick="goTo('home')"><span>← back to garden</span></div>
+    <h2 class="section-title">🫙 Finance</h2>
+    <p class="section-subtitle">Your savings greenhouse</p>
+  </div>
+  <div class="section-scroll">
+    <div class="card">
+      <p class="card-title">Log Expense</p>
+      <div class="exp-quick">
+        <input class="exp-amt-input" id="exp-amount" placeholder="$0.00" type="number" inputmode="decimal">
+        <select class="exp-cat-select" id="exp-cat">
+          <option>Housing</option><option>Food</option><option>Transport</option><option>Fun</option><option>Savings</option><option>Health</option>
+        </select>
+        <button class="btn-primary btn-terra" onclick="addExpense()" style="flex-shrink:0;padding:10px 14px">Log</button>
+      </div>
+      <div id="exp-log" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <p class="card-title" style="margin-bottom:0">Budget Plants 🌱</p>
+        <button class="btn-primary" onclick="openBudgetSheet()" style="padding:6px 12px;font-size:11px">Edit</button>
+      </div>
+      <div id="budget-plants"></div>
+    </div>
+    <div class="card">
+      <p class="card-title">Savings Jars 🫙</p>
+      <div class="jar-strip" id="jar-strip"></div>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+    <div class="nav-btn" onclick="goTo('home')"><span class="nav-icon">🏡</span><span class="nav-label">Home</span></div>
+    <div class="nav-btn" onclick="goTo('schedule')"><span class="nav-icon">🌿</span><span class="nav-label">Schedule</span></div>
+    <div class="nav-btn" onclick="goTo('finance')"><span class="nav-icon">🫙</span><span class="nav-label">Finance</span></div>
+    <div class="nav-btn" onclick="goTo('food')"><span class="nav-icon">🍓</span><span class="nav-label">Food</span></div>
+    <div class="nav-btn" onclick="goTo('journal')"><span class="nav-icon">📔</span><span class="nav-label">Journal</span></div>
+  </nav>
+</div>
+
+<!-- ═══ FOOD ═══ -->
+<div class="screen" id="food">
+  <div class="section-header-bar">
+    <div class="back-btn" onclick="goTo('home')"><span>← back to garden</span></div>
+    <h2 class="section-title">🍓 Food</h2>
+    <p class="section-subtitle">Your cozy recipe box</p>
+  </div>
+  <div class="section-scroll">
+    <div class="cat-strip">
+      <button class="cat-chip active" onclick="filterRecipes('all',this)">All</button>
+      <button class="cat-chip" onclick="filterRecipes('quick',this)">🍓 Quick</button>
+      <button class="cat-chip" onclick="filterRecipes('healthy',this)">🥗 Healthy</button>
+      <button class="cat-chip" onclick="filterRecipes('comfort',this)">🌮 Comfort</button>
+      <button class="cat-chip" onclick="filterRecipes('treat',this)">🍰 Treats</button>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <p class="card-title" style="margin-bottom:0">Recipes</p>
+        <button class="btn-primary btn-terra" onclick="openRecipeSheet()" style="padding:6px 12px;font-size:11px">+ Recipe</button>
+      </div>
+      <div id="recipe-list"></div>
+    </div>
+    <div class="card">
+      <p class="card-title">Grocery List 🛒</p>
+      <div id="grocery-list"></div>
+      <div class="add-row" style="margin-top:12px;margin-bottom:0">
+        <input class="garden-input" id="grocery-input" placeholder="Add item..." type="text" style="flex:1">
+        <button class="btn-primary btn-terra" onclick="addGrocery()" style="flex-shrink:0;padding:10px 14px">+</button>
+      </div>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+    <div class="nav-btn" onclick="goTo('home')"><span class="nav-icon">🏡</span><span class="nav-label">Home</span></div>
+    <div class="nav-btn" onclick="goTo('schedule')"><span class="nav-icon">🌿</span><span class="nav-label">Schedule</span></div>
+    <div class="nav-btn" onclick="goTo('finance')"><span class="nav-icon">🫙</span><span class="nav-label">Finance</span></div>
+    <div class="nav-btn" onclick="goTo('food')"><span class="nav-icon">🍓</span><span class="nav-label">Food</span></div>
+    <div class="nav-btn" onclick="goTo('journal')"><span class="nav-icon">📔</span><span class="nav-label">Journal</span></div>
+  </nav>
+</div>
+
+<!-- ═══ JOURNAL ═══ -->
+<div class="screen" id="journal">
+  <div class="section-header-bar">
+    <div class="back-btn" onclick="goTo('home')"><span>← back to garden</span></div>
+    <h2 class="section-title">📔 Journal</h2>
+    <p class="section-subtitle">Your safe little corner</p>
+  </div>
+  <div class="section-scroll">
+    <div class="card">
+      <p class="card-title">How are you feeling?</p>
+      <div class="mood-grid">
+        <div class="mood-tile" onclick="selectJournalMood('😊 Great',this)"><div class="mood-emoji">😊</div><div class="mood-word">Great</div></div>
+        <div class="mood-tile" onclick="selectJournalMood('🙂 Good',this)"><div class="mood-emoji">🙂</div><div class="mood-word">Good</div></div>
+        <div class="mood-tile" onclick="selectJournalMood('😐 Okay',this)"><div class="mood-emoji">😐</div><div class="mood-word">Okay</div></div>
+        <div class="mood-tile" onclick="selectJournalMood('😴 Tired',this)"><div class="mood-emoji">😴</div><div class="mood-word">Tired</div></div>
+      </div>
+      <textarea class="journal-area" id="journal-text" placeholder="What's on your mind today? No pressure — even one sentence is a gift to future you..."></textarea>
+      <button class="btn-primary btn-lav btn-full" onclick="saveEntry()">🌸 Save Entry</button>
+    </div>
+    <div class="card">
+      <p class="card-title">Your Entries</p>
+      <div class="folder-strip">
+        <div class="folder-chip active" onclick="filterFolder('all',this)">📂 All</div>
+        <div class="folder-chip" onclick="filterFolder('thoughts',this)">💭 Thoughts</div>
+        <div class="folder-chip" onclick="filterFolder('wins',this)">🏆 Wins</div>
+        <div class="folder-chip" onclick="filterFolder('dreams',this)">🌙 Dreams</div>
+        <div class="folder-chip" onclick="filterFolder('plants',this)">🪴 Plants</div>
+        <div class="folder-chip" onclick="filterFolder('gratitude',this)">💛 Gratitude</div>
+      </div>
+      <div id="entry-list"></div>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+    <div class="nav-btn" onclick="goTo('home')"><span class="nav-icon">🏡</span><span class="nav-label">Home</span></div>
+    <div class="nav-btn" onclick="goTo('schedule')"><span class="nav-icon">🌿</span><span class="nav-label">Schedule</span></div>
+    <div class="nav-btn" onclick="goTo('finance')"><span class="nav-icon">🫙</span><span class="nav-label">Finance</span></div>
+    <div class="nav-btn" onclick="goTo('food')"><span class="nav-icon">🍓</span><span class="nav-label">Food</span></div>
+    <div class="nav-btn" onclick="goTo('journal')"><span class="nav-icon">📔</span><span class="nav-label">Journal</span></div>
+  </nav>
+</div>
+
+<!-- MOOD OVERLAY -->
+<div class="mood-overlay" id="mood-overlay" onclick="closeMoodPicker(event)">
+  <div class="mood-sheet">
+    <p class="mood-sheet-title">How are you feeling today?</p>
+    <div class="mood-big-grid">
+      <div class="mood-big-btn" onclick="setHomeMood('😊','Great')"><div class="mbe">😊</div><div class="mbl">Great</div></div>
+      <div class="mood-big-btn" onclick="setHomeMood('🙂','Good')"><div class="mbe">🙂</div><div class="mbl">Good</div></div>
+      <div class="mood-big-btn" onclick="setHomeMood('😐','Okay')"><div class="mbe">😐</div><div class="mbl">Okay</div></div>
+      <div class="mood-big-btn" onclick="setHomeMood('😴','Tired')"><div class="mbe">😴</div><div class="mbl">Tired</div></div>
+      <div class="mood-big-btn" onclick="setHomeMood('😵','A lot')"><div class="mbe">😵</div><div class="mbl">A lot</div></div>
+    </div>
+    <button class="btn-primary" style="width:100%;padding:13px" onclick="closeMoodPicker()">Done ♡</button>
+  </div>
+</div>
+
+<!-- BOTTOM SHEET OVERLAY (shared) -->
+<div class="mood-overlay" id="sheet-overlay" onclick="closeSheet(event)">
+  <div class="mood-sheet" id="sheet-inner" style="max-height:85vh;overflow-y:auto"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL='https://oqqsdfckdnthtarjonou.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xcXNkZmNrZG50aHRhcmpvbm91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNTA1NzAsImV4cCI6MjA5NzgyNjU3MH0.Er5ri3beYdDJ39CaUyuoak1EQ9vwJUEn8OzvF05iB3o';
+
+const DEFAULT={
+  tasks:[
+    {id:1,text:'Water plants 🪴',done:false,priority:'high'},
+    {id:2,text:'Work shift',done:false,priority:'high'},
+    {id:3,text:'Walk outside 🌿',done:false,priority:'med'},
+    {id:4,text:'Read 20 pages',done:false,priority:'low'}
+  ],
+  events:[],
+  mood:null,journalMood:null,
+  entries:[
+    {id:1,text:'My monstera put out a new leaf today! Feeling really good.',mood:'😊 Great',date:'Jun 22',folder:'plants'},
+    {id:2,text:'Grateful for sunny weather and good coffee this morning.',mood:'🙂 Good',date:'Jun 20',folder:'gratitude'}
+  ],
+  grocery:[
+    {id:1,text:'Oat milk',done:false},
+    {id:2,text:'Sourdough bread',done:false},
+    {id:3,text:'Cherry tomatoes',done:true}
+  ],
+  expenses:[],
+  budget:[
+    {id:1,name:'Housing',icon:'🌿',spent:1200,total:1200,cls:'b-green'},
+    {id:2,name:'Food',icon:'🥗',spent:180,total:300,cls:'b-green'},
+    {id:3,name:'Transport',icon:'🚗',spent:113,total:150,cls:'b-yellow'},
+    {id:4,name:'Fun',icon:'🌸',spent:40,total:100,cls:'b-green'},
+    {id:5,name:'Savings',icon:'🫙',spent:75,total:250,cls:'b-yellow'}
+  ],
+  jars:[
+    {id:1,icon:'🫙',name:'Emergency',saved:450,goal:1000},
+    {id:2,icon:'✈️',name:'Vacation',saved:220,goal:1000},
+    {id:3,icon:'💻',name:'New Laptop',saved:100,goal:1000},
+    {id:4,icon:'🪴',name:'Plant Store',saved:68,goal:100}
+  ],
+  recipes:[
+    {id:1,icon:'🥣',name:'Oat & berry bowl',tag:'Quick · 5 min',cat:'quick',fav:true},
+    {id:2,icon:'🥗',name:'Lemon herb salad',tag:'Healthy · 10 min',cat:'healthy',fav:false},
+    {id:3,icon:'🌮',name:'Black bean tacos',tag:'Comfort · 20 min',cat:'comfort',fav:true},
+    {id:4,icon:'🍰',name:'Mug cake',tag:'Treat · 3 min',cat:'treat',fav:false},
+    {id:5,icon:'🍵',name:'Golden milk latte',tag:'Quick · 5 min',cat:'quick',fav:true},
+    {id:6,icon:'🥑',name:'Avocado toast',tag:'Healthy · 8 min',cat:'healthy',fav:false}
+  ],
+  currentRecipeCat:'all',currentFolder:'all',
+  nextTaskId:5,nextEntryId:3,nextGrocId:4,nextRecipeId:7,nextEventId:1,nextBudgetId:6,nextJarId:5,
+  plantJournal:20,plantSched:0
+};
+
+let state=JSON.parse(JSON.stringify(DEFAULT));
+let syncTimer=null,syncing=false;
+
+/* ── SUPABASE ─────────── */
+function setSyncStatus(s){
+  document.querySelectorAll('.sync-dot').forEach(d=>{
+    d.className='sync-dot '+(s==='synced'?'synced':s==='error'?'error':'');
+  });
+}
+
+async function saveCloud(){
+  if(syncing)return;syncing=true;setSyncStatus('syncing');
+  try{localStorage.setItem('lgos',JSON.stringify(state));}catch(_){}
+  try{
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/garden_data?id=eq.main`,{
+      method:'PATCH',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({data:state,updated_at:new Date().toISOString()})
+    });
+    setSyncStatus(r.ok?'synced':'error');
+  }catch(e){setSyncStatus('error');}
+  syncing=false;
+}
+function save(){clearTimeout(syncTimer);syncTimer=setTimeout(saveCloud,1000);}
+
+/* ── NAVIGATION ─────────── */
+function goTo(s){
+  document.querySelectorAll('.screen').forEach(function(x){
+    x.classList.remove('active');
+    x.style.display='none';
+  });
+  var el=document.getElementById(s);
+  if(el){el.style.display='flex';el.classList.add('active');}
+  document.querySelectorAll('.nav-btn').forEach(function(btn){
+    var oc=btn.getAttribute('onclick')||'';
+    btn.classList.toggle('active', oc.indexOf("'"+s+"'")!==-1);
+  });
+  if(s==='schedule')renderTasks();
+  if(s==='finance'){renderBudget();renderJars();renderExpenseLog();}
+  if(s==='food'){renderRecipes();renderGrocery();}
+  if(s==='journal')renderEntries();
+  if(s==='home')renderHomeQuests();
+}
+
+/* ── TOAST & LEAF ─────────── */
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+function leafBurst(x,y){
+  ['🌿','🍃','✨','🌸','⭐'].sort(()=>Math.random()-0.5).slice(0,3).forEach((em,i)=>{
+    const el=document.createElement('div');
+    el.className='leaf-burst';el.textContent=em;
+    el.style.cssText=`left:${x-20+Math.random()*40}px;top:${y-20}px;animation-delay:${i*0.1}s`;
+    document.body.appendChild(el);setTimeout(()=>el.remove(),900);
+  });
+}
+
+/* ── SHEET SYSTEM ─────────── */
+function openSheet(html){
+  document.getElementById('sheet-inner').innerHTML=html;
+  document.getElementById('sheet-overlay').classList.add('show');
+}
+function closeSheet(e){
+  if(!e||e.target===document.getElementById('sheet-overlay'))
+    document.getElementById('sheet-overlay').classList.remove('show');
+}
+function closeSheetDirect(){document.getElementById('sheet-overlay').classList.remove('show');}
+
+/* ── MOOD ─────────── */
+function openMoodPicker(){document.getElementById('mood-overlay').classList.add('show');}
+function closeMoodPicker(e){
+  if(!e||e.target===document.getElementById('mood-overlay'))
+    document.getElementById('mood-overlay').classList.remove('show');
+}
+function setHomeMood(icon,label){
+  state.mood={icon,label};save();
+  document.getElementById('mood-chip-icon').textContent=icon;
+  document.getElementById('mood-chip-text').textContent='Feeling '+label;
+  document.querySelectorAll('.mood-big-btn').forEach(b=>{
+    b.classList.toggle('selected',b.querySelector('.mbl').textContent===label);
+  });
+  toast(icon+' Mood saved!');
+  document.getElementById('mood-overlay').classList.remove('show');
+}
+
+/* ── PET ─────────── */
+const petSayings=['hiii ♡','*nibbles leaf*','you're doing great!','🍄','water ur plants!','*happy wiggle*','ur my fav human'];
+let petTimer=null;
+function petTap(){
+  const b=document.getElementById('pet-bubble');
+  b.textContent=petSayings[Math.floor(Math.random()*petSayings.length)];
+  b.classList.add('show');clearTimeout(petTimer);
+  petTimer=setTimeout(()=>b.classList.remove('show'),2500);
+  const pet=document.getElementById('pet');
+  pet.style.transform='scale(1.3) rotate(10deg)';
+  setTimeout(()=>pet.style.transform='',300);
+  toast('🍄 +5 XP for petting your companion!');
+}
+
+/* ══════════════════════════════════════════════
+   SCHEDULE
+══════════════════════════════════════════════ */
+let currentSchedTab='today';
+let currentMonthOffset=0;
+let selectedCalDay=new Date();
+let holdTimer=null;
+let holdTarget=null;
+
+function switchSchedTab(tab,btn){
+  currentSchedTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('sched-today').style.display=tab==='today'?'block':'none';
+  document.getElementById('sched-week').style.display=tab==='week'?'block':'none';
+  document.getElementById('sched-month').style.display=tab==='month'?'block':'none';
+  if(tab==='week')buildWeekBlockGrid();
+  if(tab==='month'){buildMonthCal();renderMonthTasks();}
+}
+
+/* Tasks */
+function renderTasks(){
+  const el=document.getElementById('task-list');if(!el)return;
+  el.innerHTML=state.tasks.length?state.tasks.map(t=>`
+    <div class="task-item">
+      <div class="task-cb ${t.done?'done':''}" onclick="toggleTask(${t.id},event)"></div>
+      <span class="task-text ${t.done?'done':''}" style="flex:1" onclick="toggleTask(${t.id},event)">${t.text}</span>
+      <div style="display:flex;align-items:center;gap:2px">
+        <div class="prio-dot ${t.priority==='high'?'q-high':t.priority==='med'?'q-med':'q-low'}" style="margin-right:4px"></div>
+        <button onclick="openEditTaskSheet(${t.id})" class="icon-btn">✎</button>
+        <button onclick="deleteTask(${t.id})" class="icon-btn del-btn">✕</button>
+      </div>
+    </div>`).join(''):'<p style="font-size:13px;color:var(--text-light);text-align:center;padding:16px 0;font-style:italic">No quests yet — add one above 🌱</p>';
+  updateProgress();
+}
+
+function renderHomeQuests(){
+  const el=document.getElementById('home-quests');if(!el)return;
+  el.innerHTML=state.tasks.slice(0,3).map(t=>`
+    <div class="quest-row" onclick="toggleTask(${t.id},event)">
+      <div class="q-check ${t.done?'done':''}"></div>
+      <span class="q-text ${t.done?'done':''}">${t.text}</span>
+      <div class="q-dot ${t.priority==='high'?'q-high':t.priority==='med'?'q-med':'q-low'}"></div>
+    </div>`).join('');
+  const rem=state.tasks.filter(t=>!t.done).length;
+  const c=document.getElementById('home-task-count');
+  if(c)c.textContent=rem+(rem===1?' quest':' quests')+' remaining';
+  updateProgress();
+}
+
+function renderMonthTasks(){
+  const el=document.getElementById('month-task-list');if(!el)return;
+  const label=document.getElementById('selected-day-label');
+  const now=new Date();
+  const isToday=selectedCalDay.toDateString()===now.toDateString();
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  if(label) label.textContent=(isToday?'Today — ':'')+months[selectedCalDay.getMonth()]+' '+selectedCalDay.getDate();
+  // get events for selected day
+  const dateStr=`${selectedCalDay.getFullYear()}-${String(selectedCalDay.getMonth()+1).padStart(2,'0')}-${String(selectedCalDay.getDate()).padStart(2,'0')}`;
+  const dayEvents=(state.events||[]).filter(ev=>ev.calDate===dateStr);
+  const evHtml=dayEvents.map(ev=>`
+    <div class="tl-item">
+      <div class="tl-dot pending" style="border-color:var(--terra)"></div>
+      <div class="tl-info"><div class="tl-name">${ev.label}${ev.timeLabel?' <span style='font-size:10px;color:var(--text-light)'>· '+ev.timeLabel+'</span>':''}</div></div>
+      <span class="tl-badge" style="background:rgba(197,137,106,0.15);color:var(--terra)">Event</span>
+      <button onclick="deleteMonthEvent(${ev.id})" class="icon-btn del-btn" style="margin-left:4px">✕</button>
+    </div>`).join('');
+  const taskHtml=state.tasks.map(t=>`
+    <div class="tl-item" onclick="toggleTask(${t.id},event)">
+      <div class="tl-dot ${t.done?'done':'pending'}"></div>
+      <div class="tl-info"><div class="tl-name ${t.done?'done':''}">${t.text}</div></div>
+      ${t.done?'<span class="tl-badge tl-done-badge">Done</span>':'<span class="tl-badge tl-prog-badge">Quest</span>'}
+      <button onclick="event.stopPropagation();deleteTask(${t.id})" class="icon-btn del-btn" style="margin-left:4px">✕</button>
+    </div>`).join('');
+  el.innerHTML=(evHtml+taskHtml)||'<p style="font-size:12px;color:var(--text-light);text-align:center;padding:16px 0;font-style:italic">Nothing here yet — hold the date to add an event 🌱</p>';
+}
+
+function toggleTask(id,e){
+  const t=state.tasks.find(x=>x.id===id);
+  if(t){
+    t.done=!t.done;
+    if(t.done&&e){toast('🌿 Quest complete! +20 XP');leafBurst(e.clientX,e.clientY);}
+    save();renderTasks();renderHomeQuests();renderMonthTasks();
+  }
+}
+
+function addTask(source){
+  const inputId=source==='month'?'task-input-month':'task-input';
+  const inp=document.getElementById(inputId);
+  if(!inp||!inp.value.trim())return;
+  state.tasks.push({id:state.nextTaskId++,text:inp.value.trim(),done:false,priority:'med'});
+  inp.value='';save();renderTasks();renderHomeQuests();renderMonthTasks();
+  toast('🌱 New quest planted!');
+}
+
+function deleteTask(id){
+  state.tasks=state.tasks.filter(x=>x.id!==id);
+  save();renderTasks();renderHomeQuests();renderMonthTasks();
+  toast('Quest removed 🌿');
+}
+
+function openEditTaskSheet(id){
+  const t=state.tasks.find(x=>x.id===id);if(!t)return;
+  openSheet(`
+    <p style="font-family:var(--font-serif);font-size:20px;color:var(--text-dark);margin-bottom:16px">Edit Quest</p>
+    <input class="garden-input" id="edit-task-text" value="${t.text}" style="margin-bottom:12px">
+    <p style="font-size:12px;color:var(--text-light);margin-bottom:8px;font-family:var(--font-sans)">Priority</p>
+    <div style="display:flex;gap:8px;margin-bottom:20px">
+      <button onclick="setEditPrio('high')" class="btn-primary" style="flex:1;padding:9px;font-size:12px;background:var(--terra)">🔴 High</button>
+      <button onclick="setEditPrio('med')" class="btn-primary" style="flex:1;padding:9px;font-size:12px;background:var(--peach);color:var(--brown)">🟡 Med</button>
+      <button onclick="setEditPrio('low')" class="btn-primary" style="flex:1;padding:9px;font-size:12px;background:var(--sage)">🟢 Low</button>
+    </div>
+    <button class="btn-primary" style="width:100%;padding:13px" onclick="saveEditTask(${id})">Save Changes</button>
+  `);
+  window._editPrio=t.priority;
+}
+function setEditPrio(p){window._editPrio=p;}
+function saveEditTask(id){
+  const t=state.tasks.find(x=>x.id===id);if(!t)return;
+  const v=document.getElementById('edit-task-text').value.trim();
+  if(v)t.text=v;
+  t.priority=window._editPrio||t.priority;
+  save();renderTasks();renderHomeQuests();renderMonthTasks();
+  closeSheetDirect();toast('Quest updated 🌿');
+}
+
+function updateProgress(){
+  const done=state.tasks.filter(t=>t.done).length;
+  const total=state.tasks.length;
+  const pct=total?Math.round((done/total)*100):0;
+  ['sched-progress','home-progress'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.width=pct+'%';
+  });
+  const sl=document.getElementById('sched-label');if(sl)sl.textContent=`${done} of ${total} complete`;
+  const xp=document.getElementById('xp-badge');if(xp)xp.textContent=`+${done*20} XP`;
+  const ps=document.getElementById('plant-sched');if(ps)ps.style.width=pct+'%';
+  state.plantSched=pct;
+}
+
+/* Week grid */
+const BLOCK_COLORS=['wg-pink','wg-green','wg-terra','wg-lav','wg-sage'];
+const TIMES=['8:00','9:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
+const DAY_NAMES=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+function buildWeekBlockGrid(){
+  const grid=document.getElementById('week-block-grid');if(!grid)return;
+  const now=new Date();
+  const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7));
+  let html='<thead><tr><th class="wg-corner"></th>';
+  for(let i=0;i<7;i++){
+    const d=new Date(mon);d.setDate(mon.getDate()+i);
+    const isToday=d.toDateString()===now.toDateString();
+    html+=`<th class="wg-day-head ${isToday?'today-col':''}"><div>${DAY_NAMES[i]}</div><div class="wg-day-num ${isToday?'today-num':''}">${d.getDate()}</div></th>`;
+  }
+  html+='</tr></thead><tbody>';
+  for(let r=0;r<TIMES.length;r++){
+    html+=`<tr><td class="wg-time-label">${TIMES[r]}</td>`;
+    for(let c=0;c<7;c++){
+      const d=new Date(mon);d.setDate(mon.getDate()+c);
+      const isToday=d.toDateString()===now.toDateString();
+      const dayEvents=(state.events||[]).filter(ev=>ev.dayCol===c&&ev.timeRow===r);
+      let blockHtml='';
+      if(dayEvents.length>0){
+        const ev=dayEvents[0];
+        // tap existing block to edit
+        blockHtml=`<div class="wg-block ${ev.color}" ontouchstart="blockTouchStart(event,${ev.id})" ontouchend="blockTouchEnd(event)" ontouchmove="cancelHold()" onclick="openEventSheet(${ev.id})" style="font-size:9px">${ev.label}<br><span style="font-size:8px;opacity:0.7">${TIMES[r]}</span></div>`;
+      } else {
+        // hold empty cell to add
+        blockHtml=`<div class="wg-empty-cell" ontouchstart="cellHoldStart(event,${c},${r})" ontouchend="cancelHold()" ontouchmove="cancelHold()" onmousedown="cellHoldStart(event,${c},${r})" onmouseup="cancelHold()" onmouseleave="cancelHold()"></div>`;
+      }
+      html+=`<td class="wg-cell ${isToday?'today-col':''}">${blockHtml}</td>`;
+    }
+    html+='</tr>';
+  }
+  html+='</tbody>';
+  grid.innerHTML=html;
+}
+
+// Hold to add on empty cell
+function cellHoldStart(e,dayCol,timeRow){
+  e.preventDefault();
+  showHoldRipple(e);
+  holdTimer=setTimeout(()=>{
+    cancelHold();
+    openEventSheet(null,dayCol,timeRow);
+  },600);
+}
+// Tap/hold on existing block — tap=edit, hold=delete confirm
+function blockTouchStart(e,evId){
+  holdTimer=setTimeout(()=>{
+    cancelHold();
+    confirmDeleteEvent(evId);
+  },700);
+}
+function blockTouchEnd(e){cancelHold();}
+function cancelHold(){clearTimeout(holdTimer);holdTimer=null;removeHoldRipple();}
+
+function showHoldRipple(e){
+  removeHoldRipple();
+  const el=document.createElement('div');
+  el.id='hold-ripple';
+  const touch=e.touches?e.touches[0]:e;
+  el.style.cssText=`position:fixed;left:${touch.clientX-20}px;top:${touch.clientY-20}px;width:40px;height:40px;border-radius:50%;background:rgba(165,184,158,0.4);pointer-events:none;z-index:999;animation:ripple-grow 0.6s ease-out forwards`;
+  document.body.appendChild(el);
+}
+function removeHoldRipple(){const el=document.getElementById('hold-ripple');if(el)el.remove();}
+
+function confirmDeleteEvent(id){
+  const ev=(state.events||[]).find(x=>x.id===id);if(!ev)return;
+  openSheet(`
+    <p style="font-family:var(--font-serif);font-size:20px;color:var(--text-dark);margin-bottom:8px">${ev.label}</p>
+    <p style="font-size:12px;color:var(--text-light);font-family:var(--font-sans);margin-bottom:20px">${DAY_NAMES[ev.dayCol]} · ${TIMES[ev.timeRow]}</p>
+    <button class="btn-primary" style="width:100%;padding:13px;margin-bottom:8px" onclick="openEventSheet(${id})">✎ Edit Event</button>
+    <button onclick="deleteEvent(${id})" style="width:100%;padding:11px;border:1.5px solid var(--dusty-pink);border-radius:14px;background:transparent;color:var(--dusty-pink);font-size:13px;font-family:var(--font-sans);cursor:pointer">✕ Delete Event</button>
+    <button onclick="closeSheetDirect()" style="width:100%;padding:11px;border:none;background:transparent;color:var(--text-light);font-size:13px;font-family:var(--font-sans);cursor:pointer;margin-top:4px">Cancel</button>
+  `);
+}
+
+function openEventSheet(editId,prefDay,prefTime){
+  const ev=editId!=null?(state.events||[]).find(x=>x.id===editId):null;
+  const defaultDay=prefDay!=null?prefDay:(ev?ev.dayCol:0);
+  const defaultTime=prefTime!=null?prefTime:(ev?ev.timeRow:0);
+  openSheet(`
+    <p style="font-family:var(--font-serif);font-size:20px;color:var(--text-dark);margin-bottom:16px">${ev?'Edit Event':'New Event ✨'}</p>
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Event name</label>
+    <input class="garden-input" id="ev-label" value="${ev?ev.label:''}" placeholder="e.g. Work shift" style="margin:6px 0 12px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div>
+        <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Day</label>
+        <select class="exp-cat-select" id="ev-day" style="width:100%;margin-top:6px">
+          ${DAY_NAMES.map((d,i)=>`<option value="${i}" ${defaultDay===i?'selected':''}>${d}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Time</label>
+        <select class="exp-cat-select" id="ev-time" style="width:100%;margin-top:6px">
+          ${TIMES.map((t,i)=>`<option value="${i}" ${defaultTime===i?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Color</label>
+    <div style="display:flex;gap:10px;margin:8px 0 20px">
+      ${BLOCK_COLORS.map(c=>`<div onclick="selectEvColor('${c}')" id="evc-${c}" style="width:30px;height:30px;border-radius:50%;cursor:pointer;transition:transform 0.15s;border:2.5px solid ${c===((ev&&ev.color)||'wg-pink')?'var(--text-dark)':'transparent'}" class="${c}"></div>`).join('')}
+    </div>
+    <button class="btn-primary" style="width:100%;padding:13px;margin-bottom:8px" onclick="saveEvent(${ev?ev.id:'null'})">${ev?'Save Changes':'Add to Week'}</button>
+    ${ev?`<button onclick="deleteEvent(${ev.id})" style="width:100%;padding:11px;border:1.5px solid var(--dusty-pink);border-radius:14px;background:transparent;color:var(--dusty-pink);font-size:13px;font-family:var(--font-sans);cursor:pointer">Delete Event</button>`:''}
+  `);
+  window._evColor=(ev&&ev.color)||'wg-pink';
+}
+
+function openEditEventSheet(id){openEventSheet(id);}
+function selectEvColor(c){
+  window._evColor=c;
+  BLOCK_COLORS.forEach(x=>{
+    const el=document.getElementById('evc-'+x);
+    if(el)el.style.border=`2.5px solid ${x===c?'var(--text-dark)':'transparent'}`;
+  });
+}
+function saveEvent(editId){
+  const label=document.getElementById('ev-label').value.trim();
+  if(!label){toast('Add a name first 🌿');return;}
+  const dayCol=parseInt(document.getElementById('ev-day').value);
+  const timeRow=parseInt(document.getElementById('ev-time').value);
+  const color=window._evColor||'wg-pink';
+  if(!state.events)state.events=[];
+  if(editId!==null&&editId!==undefined&&editId!=='null'){
+    const ev=state.events.find(x=>x.id===editId);
+    if(ev){ev.label=label;ev.dayCol=dayCol;ev.timeRow=timeRow;ev.color=color;}
+    toast('Event updated 🌿');
+  } else {
+    state.events.push({id:state.nextEventId++,label,dayCol,timeRow,color});
+    toast('Event added! 🌿');
+  }
+  save();closeSheetDirect();buildWeekBlockGrid();
+}
+function deleteEvent(id){
+  state.events=(state.events||[]).filter(x=>x.id!==id);
+  save();closeSheetDirect();buildWeekBlockGrid();toast('Event removed');
+}
+
+/* Month */
+function changeMonth(dir){currentMonthOffset+=dir;buildMonthCal();}
+function buildMonthCal(){
+  const base=new Date();base.setMonth(base.getMonth()+currentMonthOffset);
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const el=document.getElementById('month-title');
+  if(el)el.textContent=months[base.getMonth()]+' '+base.getFullYear();
+  const headEl=document.getElementById('mc-head'),daysEl=document.getElementById('mc-days');
+  if(!headEl||!daysEl)return;
+  headEl.innerHTML=['S','M','T','W','T','F','S'].map(x=>`<div class="mc-dname">${x}</div>`).join('');
+  const year=base.getFullYear(),month=base.getMonth();
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const today=new Date();
+  let html='';
+  for(let i=0;i<firstDay;i++){html+=`<div class="mc-day">${new Date(year,month,1-firstDay+i).getDate()}</div>`;}
+  for(let day=1;day<=daysInMonth;day++){
+    const isToday=today.getDate()===day&&today.getMonth()===month&&today.getFullYear()===year;
+    const isSel=selectedCalDay.getDate()===day&&selectedCalDay.getMonth()===month&&selectedCalDay.getFullYear()===year;
+    // show dot if any events on this calendar date
+    const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const hasEvents=(state.events||[]).some(ev=>ev.calDate===dateStr);
+    const hasTasks=state.tasks.length>0;
+    html+=`<div class="mc-day this-month ${isToday?'today':''} ${isSel&&!isToday?'selected':''} ${hasEvents||hasTasks?'has-tasks':''}"
+      onclick="selectCalDay(${year},${month},${day})"
+      ontouchstart="monthDayHoldStart(event,${year},${month},${day})"
+      ontouchend="monthDayHoldEnd(event,${year},${month},${day})"
+      ontouchmove="cancelHold()"
+      onmousedown="monthDayHoldStart(event,${year},${month},${day})"
+      onmouseup="monthDayHoldEnd(event,${year},${month},${day})"
+      onmouseleave="cancelHold()"
+    >${day}</div>`;
+  }
+  daysEl.innerHTML=html;
+}
+
+// tap = select day, hold = add event on that day
+let _monthHoldDay=null;
+function monthDayHoldStart(e,y,m,d){
+  _monthHoldDay={y,m,d};
+  holdTimer=setTimeout(()=>{
+    cancelHold();
+    openMonthEventSheet(y,m,d);
+  },600);
+}
+function monthDayHoldEnd(e,y,m,d){
+  if(holdTimer){
+    cancelHold();
+    selectCalDay(y,m,d);
+  }
+}
+
+function openMonthEventSheet(y,m,d){
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dateStr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const existing=(state.events||[]).filter(ev=>ev.calDate===dateStr);
+  openSheet(`
+    <p style="font-family:var(--font-serif);font-size:20px;color:var(--text-dark);margin-bottom:4px">Add Event</p>
+    <p style="font-size:12px;color:var(--text-light);font-family:var(--font-sans);margin-bottom:16px">${months[m]} ${d}, ${y}</p>
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Event name</label>
+    <input class="garden-input" id="mev-label" placeholder="e.g. Doctor appointment" style="margin:6px 0 12px">
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Time (optional)</label>
+    <input class="garden-input" id="mev-time" placeholder="e.g. 2:00 PM" style="margin:6px 0 12px">
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Color</label>
+    <div style="display:flex;gap:10px;margin:8px 0 20px">
+      ${BLOCK_COLORS.map((c,i)=>`<div onclick="selectEvColor('${c}')" id="evc-${c}" style="width:30px;height:30px;border-radius:50%;cursor:pointer;transition:transform 0.15s;border:2.5px solid ${i===0?'var(--text-dark)':'transparent'}" class="${c}"></div>`).join('')}
+    </div>
+    ${existing.length?`<p style="font-size:11px;color:var(--text-light);font-family:var(--font-sans);margin-bottom:10px">Already on this day:</p>${existing.map(ev=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--ivory);border-radius:10px;margin-bottom:6px"><span style="font-size:12px;font-family:var(--font-sans)">${ev.label}${ev.timeLabel?' · '+ev.timeLabel:''}</span><button onclick="deleteMonthEvent(${ev.id})" style="border:none;background:transparent;color:var(--dusty-pink);cursor:pointer;font-size:13px">✕</button></div>`).join('')`:''}
+    <button class="btn-primary" style="width:100%;padding:13px" onclick="saveMonthEvent(${y},${m},${d})">Add Event</button>
+  `);
+  window._evColor='wg-pink';
+}
+
+function saveMonthEvent(y,m,d){
+  const label=document.getElementById('mev-label').value.trim();
+  if(!label){toast('Add a name first 🌿');return;}
+  const timeLabel=document.getElementById('mev-time').value.trim();
+  const color=window._evColor||'wg-pink';
+  const dateStr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  if(!state.events)state.events=[];
+  state.events.push({id:state.nextEventId++,label,timeLabel,color,calDate:dateStr,dayCol:null,timeRow:null});
+  save();closeSheetDirect();buildMonthCal();renderMonthTasks();
+  toast('Event added! 🌿');
+}
+function deleteMonthEvent(id){
+  state.events=(state.events||[]).filter(x=>x.id!==id);
+  save();closeSheetDirect();buildMonthCal();renderMonthTasks();toast('Event removed');
+}
+
+function selectCalDay(y,m,d){
+  selectedCalDay=new Date(y,m,d);
+  buildMonthCal();renderMonthTasks();
+}
+
+/* ══════════════════════════════════════════════
+   FINANCE
+══════════════════════════════════════════════ */
+function renderBudget(){
+  const el=document.getElementById('budget-plants');if(!el)return;
+  el.innerHTML=(state.budget||[]).map(b=>{
+    const pct=b.total?Math.round((b.spent/b.total)*100):0;
+    const cls=pct>=90?'b-red':pct>=70?'b-yellow':'b-green';
+    return `<div class="budget-row">
+      <div class="b-icon">${b.icon}</div>
+      <div class="b-info">
+        <div class="b-name">${b.name}</div>
+        <div class="b-track"><div class="b-fill ${cls}" style="width:${Math.min(100,pct)}%"></div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="b-amt">$${b.spent}/$${b.total}</div>
+        <span onclick="openEditBudgetSheet(${b.id})" style="font-size:14px;cursor:pointer;color:var(--text-light)">✎</span>
+        <span onclick="deleteBudget(${b.id})" style="font-size:14px;cursor:pointer;color:var(--dusty-pink)">✕</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderJars(){
+  const el=document.getElementById('jar-strip');if(!el)return;
+  el.innerHTML=(state.jars||[]).map(j=>{
+    const pct=j.goal?Math.round((j.saved/j.goal)*100):0;
+    return `<div class="jar-item" onclick="openEditJarSheet(${j.id})">
+      <div class="jar-emoji">${j.icon}</div>
+      <div class="jar-label">${j.name}</div>
+      <div class="jar-pct">${pct}%</div>
+    </div>`;
+  }).join('')+`<div class="jar-item" onclick="openEditJarSheet()" style="cursor:pointer;opacity:0.6">
+    <div class="jar-emoji">➕</div><div class="jar-label">New jar</div><div class="jar-pct"></div>
+  </div>`;
+}
+
+function renderExpenseLog(){
+  const log=document.getElementById('exp-log');
+  if(log&&state.expenses.length>0){
+    log.innerHTML=state.expenses.slice(0,5).map((e,i)=>`
+      <div class="exp-log-item">
+        <span>$${e.amt} · ${e.cat}</span>
+        <span style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:10px;color:var(--text-light)">${e.date||'Today'}</span>
+          <span onclick="deleteExpense(${i})" style="cursor:pointer;color:var(--dusty-pink);font-size:13px">✕</span>
+        </span>
+      </div>`).join('');
+  }
+}
+
+function addExpense(){
+  const amt=document.getElementById('exp-amount').value;
+  const cat=document.getElementById('exp-cat').value;
+  if(!amt||isNaN(parseFloat(amt)))return;
+  const now=new Date();
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  state.expenses.unshift({amt:parseFloat(amt).toFixed(2),cat,date:months[now.getMonth()]+' '+now.getDate()});
+  document.getElementById('exp-amount').value='';
+  save();renderExpenseLog();toast('🌱 $'+parseFloat(amt).toFixed(2)+' logged');
+}
+
+function deleteExpense(i){
+  state.expenses.splice(i,1);save();renderExpenseLog();toast('Expense removed');
+}
+
+function openBudgetSheet(){
+  openSheet(`
+    <p style="font-family:var(--font-serif);font-size:20px;color:var(--text-dark);margin-bottom:16px">Add Budget Category</p>
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Category name</label>
+    <input class="garden-input" id="new-bname" placeholder="e.g. Entertainment" style="margin:6px 0 12px">
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Icon (emoji)</label>
+    <input class="garden-input" id="new-bicon" placeholder="🎬" style="margin:6px 0 12px;width:80px">
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Monthly budget ($)</label>
+    <input class="garden-input" id="new-btotal" type="number" placeholder="200" style="margin:6px 0 20px">
+    <button class="btn-primary" style="width:100%;padding:13px" onclick="addBudgetCat()">Add Category</button>
+  `);
+}
+
+function addBudgetCat(){
+  const name=document.getElementById('new-bname').value.trim();
+  const icon=document.getElementById('new-bicon').value.trim()||'🌿';
+  const total=parseFloat(document.getElementById('new-btotal').value)||100;
+  if(!name){toast('Add a name first');return;}
+  if(!state.budget)state.budget=[];
+  state.budget.push({id:state.nextBudgetId++,name,icon,spent:0,total,cls:'b-green'});
+  save();renderBudget();closeSheetDirect();toast('Budget category added 🌱');
+}
+
+function openEditBudgetSheet(id){
+  const b=(state.budget||[]).find(x=>x.id===id);if(!b)return;
+  openSheet(`
+    <p style="font-family:var(--font-serif);font-size:20px;color:var(--text-dark);margin-bottom:16px">Edit ${b.name}</p>
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Amount spent ($)</label>
+    <input class="garden-input" id="eb-spent" type="number" value="${b.spent}" style="margin:6px 0 12px">
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Monthly budget ($)</label>
+    <input class="garden-input" id="eb-total" type="number" value="${b.total}" style="margin:6px 0 20px">
+    <button class="btn-primary" style="width:100%;padding:13px;margin-bottom:8px" onclick="saveBudgetEdit(${id})">Save</button>
+    <button onclick="deleteBudget(${id})" style="width:100%;padding:11px;border:1.5px solid var(--dusty-pink);border-radius:14px;background:transparent;color:var(--dusty-pink);font-size:13px;font-family:var(--font-sans);cursor:pointer">Delete Category</button>
+  `);
+}
+
+function saveBudgetEdit(id){
+  const b=(state.budget||[]).find(x=>x.id===id);if(!b)return;
+  b.spent=parseFloat(document.getElementById('eb-spent').value)||0;
+  b.total=parseFloat(document.getElementById('eb-total').value)||100;
+  save();renderBudget();closeSheetDirect();toast('Budget updated 🌱');
+}
+
+function deleteBudget(id){
+  state.budget=(state.budget||[]).filter(x=>x.id!==id);
+  save();renderBudget();closeSheetDirect();toast('Category removed');
+}
+
+function openEditJarSheet(id){
+  const j=id!=null?(state.jars||[]).find(x=>x.id===id):null;
+  openSheet(`
+    <p style="font-family:var(--font-serif);font-size:20px;color:var(--text-dark);margin-bottom:16px">${j?'Edit Jar':'New Jar'}</p>
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Jar name</label>
+    <input class="garden-input" id="jar-name" value="${j?j.name:''}" placeholder="e.g. New Car" style="margin:6px 0 12px">
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Icon</label>
+    <input class="garden-input" id="jar-icon" value="${j?j.icon:'🫙'}" style="margin:6px 0 12px;width:80px">
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Saved so far ($)</label>
+    <input class="garden-input" id="jar-saved" type="number" value="${j?j.saved:0}" style="margin:6px 0 12px">
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Goal ($)</label>
+    <input class="garden-input" id="jar-goal" type="number" value="${j?j.goal:500}" style="margin:6px 0 20px">
+    <button class="btn-primary" style="width:100%;padding:13px;margin-bottom:8px" onclick="saveJar(${j?j.id:null})">${j?'Save Changes':'Add Jar'}</button>
+    ${j?`<button onclick="deleteJar(${j.id})" style="width:100%;padding:11px;border:1.5px solid var(--dusty-pink);border-radius:14px;background:transparent;color:var(--dusty-pink);font-size:13px;font-family:var(--font-sans);cursor:pointer">Delete Jar</button>`:''}
+  `);
+}
+
+function saveJar(id){
+  const name=document.getElementById('jar-name').value.trim();
+  if(!name){toast('Add a name first');return;}
+  const icon=document.getElementById('jar-icon').value.trim()||'🫙';
+  const saved=parseFloat(document.getElementById('jar-saved').value)||0;
+  const goal=parseFloat(document.getElementById('jar-goal').value)||500;
+  if(!state.jars)state.jars=[];
+  if(id!=null){
+    const j=state.jars.find(x=>x.id===id);
+    if(j){j.name=name;j.icon=icon;j.saved=saved;j.goal=goal;}
+  } else {
+    state.jars.push({id:state.nextJarId++,name,icon,saved,goal});
+  }
+  save();renderJars();closeSheetDirect();toast('Jar saved 🫙');
+}
+
+function deleteJar(id){
+  state.jars=(state.jars||[]).filter(x=>x.id!==id);
+  save();renderJars();closeSheetDirect();toast('Jar removed');
+}
+
+/* ══════════════════════════════════════════════
+   FOOD
+══════════════════════════════════════════════ */
+function renderRecipes(){
+  const el=document.getElementById('recipe-list');if(!el)return;
+  const list=state.currentRecipeCat==='all'?state.recipes:state.recipes.filter(r=>r.cat===state.currentRecipeCat);
+  el.innerHTML=list.length?list.map(r=>`
+    <div class="recipe-row">
+      <div class="recipe-emoji">${r.icon}</div>
+      <div class="recipe-info"><div class="recipe-name">${r.name}</div><div class="recipe-tag">${r.tag}</div></div>
+      <div style="display:flex;align-items:center;gap:4px">
+        <div class="recipe-heart" onclick="toggleFav(${r.id})">${r.fav?'❤️':'🤍'}</div>
+        <span onclick="openEditRecipeSheet(${r.id})" style="font-size:14px;cursor:pointer;color:var(--text-light);padding:2px 4px">✎</span>
+        <span onclick="deleteRecipe(${r.id})" style="font-size:14px;cursor:pointer;color:var(--dusty-pink);padding:2px 4px">✕</span>
+      </div>
+    </div>`).join(''):'<p style="font-size:13px;color:var(--text-light);text-align:center;padding:16px 0;font-style:italic">No recipes yet — add one above 🍓</p>';
+}
+
+function toggleFav(id){
+  const r=state.recipes.find(x=>x.id===id);
+  if(r){r.fav=!r.fav;save();renderRecipes();toast(r.fav?'❤️ Favorited':'Removed from favorites');}
+}
+
+function filterRecipes(cat,btn){
+  state.currentRecipeCat=cat;
+  document.querySelectorAll('.cat-chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');renderRecipes();
+}
+
+function openRecipeSheet(editId){
+  const r=editId!=null?state.recipes.find(x=>x.id===editId):null;
+  const cats=['quick','healthy','comfort','treat'];
+  const catLabels={'quick':'🍓 Quick','healthy':'🥗 Healthy','comfort':'🌮 Comfort','treat':'🍰 Treat'};
+  openSheet(`
+    <p style="font-family:var(--font-serif);font-size:20px;color:var(--text-dark);margin-bottom:16px">${r?'Edit Recipe':'Add Recipe'}</p>
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Recipe name</label>
+    <input class="garden-input" id="rec-name" value="${r?r.name:''}" placeholder="e.g. Avocado toast" style="margin:6px 0 12px">
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <div style="flex:1">
+        <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Emoji</label>
+        <input class="garden-input" id="rec-icon" value="${r?r.icon:'🍽️'}" style="margin-top:6px;width:80px">
+      </div>
+      <div style="flex:1">
+        <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Time</label>
+        <input class="garden-input" id="rec-time" value="${r?r.tag.split('·')[1]||'':''}" placeholder="10 min" style="margin-top:6px">
+      </div>
+    </div>
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Category</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0 20px" id="rec-cat-grid">
+      ${cats.map(c=>`<div onclick="selectRecipeCat('${c}')" id="rcat-${c}" style="padding:9px;border-radius:12px;border:1.5px solid rgba(165,184,158,0.3);text-align:center;font-size:12px;font-family:var(--font-sans);cursor:pointer;background:${r&&r.cat===c?'rgba(165,184,158,0.2)':'white'};border-color:${r&&r.cat===c?'var(--sage)':'rgba(165,184,158,0.3)'}">${catLabels[c]}</div>`).join('')}
+    </div>
+    <button class="btn-primary" style="width:100%;padding:13px;margin-bottom:8px" onclick="saveRecipe(${r?r.id:null})">${r?'Save Changes':'Add Recipe'}</button>
+    ${r?`<button onclick="deleteRecipe(${r.id})" style="width:100%;padding:11px;border:1.5px solid var(--dusty-pink);border-radius:14px;background:transparent;color:var(--dusty-pink);font-size:13px;font-family:var(--font-sans);cursor:pointer">Delete Recipe</button>`:''}
+  `);
+  window._recCat=(r&&r.cat)||'quick';
+}
+function openEditRecipeSheet(id){openRecipeSheet(id);}
+
+function selectRecipeCat(cat){
+  window._recCat=cat;
+  ['quick','healthy','comfort','treat'].forEach(c=>{
+    const el=document.getElementById('rcat-'+c);
+    if(el){
+      el.style.background=c===cat?'rgba(165,184,158,0.2)':'white';
+      el.style.borderColor=c===cat?'var(--sage)':'rgba(165,184,158,0.3)';
+    }
+  });
+}
+
+function saveRecipe(id){
+  const name=document.getElementById('rec-name').value.trim();
+  if(!name){toast('Add a name first');return;}
+  const icon=document.getElementById('rec-icon').value.trim()||'🍽️';
+  const time=document.getElementById('rec-time').value.trim()||'?';
+  const cat=window._recCat||'quick';
+  const catLabels={'quick':'Quick','healthy':'Healthy','comfort':'Comfort','treat':'Treat'};
+  const tag=`${catLabels[cat]} · ${time}`;
+  if(id!=null){
+    const r=state.recipes.find(x=>x.id===id);
+    if(r){r.name=name;r.icon=icon;r.tag=tag;r.cat=cat;}
+    toast('Recipe updated 🍓');
+  } else {
+    state.recipes.push({id:state.nextRecipeId++,icon,name,tag,cat,fav:false});
+    toast('Recipe added! 🍓');
+  }
+  save();renderRecipes();closeSheetDirect();
+}
+
+function deleteRecipe(id){
+  state.recipes=state.recipes.filter(x=>x.id!==id);
+  save();renderRecipes();closeSheetDirect();toast('Recipe removed');
+}
+
+function renderGrocery(){
+  const el=document.getElementById('grocery-list');if(!el)return;
+  el.innerHTML=state.grocery.map(g=>`
+    <div class="grocery-row">
+      <div class="g-box ${g.done?'done':''}" onclick="toggleGrocery(${g.id})">${g.done?'✓':''}</div>
+      <span class="g-label ${g.done?'done':''}" onclick="toggleGrocery(${g.id})" style="flex:1">${g.text}</span>
+      <span onclick="deleteGrocery(${g.id})" style="font-size:14px;cursor:pointer;color:var(--dusty-pink);padding:2px 6px">✕</span>
+    </div>`).join('');
+}
+
+function toggleGrocery(id){
+  const g=state.grocery.find(x=>x.id===id);
+  if(g){g.done=!g.done;save();renderGrocery();}
+}
+
+function addGrocery(){
+  const inp=document.getElementById('grocery-input');
+  if(!inp||!inp.value.trim())return;
+  state.grocery.push({id:state.nextGrocId++,text:inp.value.trim(),done:false});
+  inp.value='';save();renderGrocery();
+}
+
+function deleteGrocery(id){
+  state.grocery=state.grocery.filter(x=>x.id!==id);
+  save();renderGrocery();
+}
+
+/* ══════════════════════════════════════════════
+   JOURNAL
+══════════════════════════════════════════════ */
+function selectJournalMood(mood,el){
+  state.journalMood=mood;
+  document.querySelectorAll('.mood-tile').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function saveEntry(){
+  const text=document.getElementById('journal-text').value.trim();
+  if(!text){toast('Write something first 🌸');return;}
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now=new Date();
+  state.entries.unshift({id:state.nextEntryId++,text,mood:state.journalMood||'🙂',date:`${months[now.getMonth()]} ${now.getDate()}`,folder:'thoughts'});
+  document.getElementById('journal-text').value='';
+  document.querySelectorAll('.mood-tile').forEach(b=>b.classList.remove('selected'));
+  state.journalMood=null;
+  state.plantJournal=Math.min(100,(state.plantJournal||20)+10);
+  save();renderEntries();
+  const pj=document.getElementById('plant-journal');if(pj)pj.style.width=state.plantJournal+'%';
+  const ec=document.getElementById('home-entry-count');
+  if(ec)ec.textContent=state.entries.length+' entr'+(state.entries.length!==1?'ies':'y');
+  toast('🌸 Entry saved — your garden grows');
+}
+
+function renderEntries(){
+  const el=document.getElementById('entry-list');if(!el)return;
+  const list=state.currentFolder==='all'?state.entries:state.entries.filter(e=>e.folder===state.currentFolder);
+  el.innerHTML=list.length?list.map(e=>`
+    <div class="entry-item">
+      <div class="entry-meta" style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="entry-date">${e.date}</span>
+          <span class="entry-mood-tag">${e.mood}</span>
+        </div>
+        <div style="display:flex;gap:6px">
+          <span onclick="openEditEntrySheet(${e.id})" style="font-size:13px;cursor:pointer;color:var(--text-light)">✎</span>
+          <span onclick="deleteEntry(${e.id})" style="font-size:13px;cursor:pointer;color:var(--dusty-pink)">✕</span>
+        </div>
+      </div>
+      <div class="entry-body">${e.text.length>130?e.text.slice(0,130)+'…':e.text}</div>
+    </div>`).join(''):'<p style="font-size:13px;color:var(--text-light);padding:16px 0;text-align:center;font-style:italic">Nothing here yet. Start writing 🌱</p>';
+}
+
+function deleteEntry(id){
+  state.entries=state.entries.filter(x=>x.id!==id);
+  save();renderEntries();toast('Entry removed');
+}
+
+function openEditEntrySheet(id){
+  const e=state.entries.find(x=>x.id===id);if(!e)return;
+  openSheet(`
+    <p style="font-family:var(--font-serif);font-size:20px;color:var(--text-dark);margin-bottom:16px">Edit Entry</p>
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Folder</label>
+    <select class="exp-cat-select" id="edit-folder" style="width:100%;margin:6px 0 12px">
+      <option value="thoughts" ${e.folder==='thoughts'?'selected':''}>💭 Thoughts</option>
+      <option value="wins" ${e.folder==='wins'?'selected':''}>🏆 Wins</option>
+      <option value="dreams" ${e.folder==='dreams'?'selected':''}>🌙 Dreams</option>
+      <option value="plants" ${e.folder==='plants'?'selected':''}>🪴 Plants</option>
+      <option value="gratitude" ${e.folder==='gratitude'?'selected':''}>💛 Gratitude</option>
+    </select>
+    <label style="font-size:12px;color:var(--text-light);font-family:var(--font-sans)">Entry</label>
+    <textarea class="journal-area" id="edit-entry-text" style="margin:6px 0 20px;min-height:120px">${e.text}</textarea>
+    <button class="btn-primary btn-lav" style="width:100%;padding:13px" onclick="saveEditEntry(${id})">Save Changes</button>
+  `);
+}
+
+function saveEditEntry(id){
+  const e=state.entries.find(x=>x.id===id);if(!e)return;
+  const text=document.getElementById('edit-entry-text').value.trim();
+  const folder=document.getElementById('edit-folder').value;
+  if(text)e.text=text;
+  e.folder=folder;
+  save();renderEntries();closeSheetDirect();toast('Entry updated 🌸');
+}
+
+function filterFolder(folder,el){
+  state.currentFolder=folder;
+  document.querySelectorAll('.folder-chip').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');renderEntries();
+}
+
+/* ══════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════ */
+function setDate(){
+  const el=document.getElementById('today-date');if(!el)return;
+  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const now=new Date();
+  el.textContent=`${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
+  const hr=now.getHours();
+  const g=document.getElementById('greeting-text');
+  if(g)g.textContent=(hr<12?'Good morning':hr<17?'Good afternoon':'Good evening')+', Max';
+}
+
+function setClock(){
+  const el=document.querySelector('.status-time');if(!el)return;
+  const now=new Date();
+  el.textContent=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+}
+
+function restoreUI(){
+  if(state.mood){
+    document.getElementById('mood-chip-icon').textContent=state.mood.icon;
+    document.getElementById('mood-chip-text').textContent='Feeling '+state.mood.label;
+  }
+  const pj=document.getElementById('plant-journal');if(pj)pj.style.width=(state.plantJournal||20)+'%';
+  const ec=document.getElementById('home-entry-count');
+  if(ec&&state.entries.length>0)ec.textContent=state.entries.length+' entr'+(state.entries.length!==1?'ies':'y');
+  renderExpenseLog();
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const ti=document.getElementById('task-input');
+  if(ti)ti.addEventListener('keydown',e=>{if(e.key==='Enter')addTask();});
+  const gi=document.getElementById('grocery-input');
+  if(gi)gi.addEventListener('keydown',e=>{if(e.key==='Enter')addGrocery();});
+  const tm=document.getElementById('task-input-month');
+  if(tm)tm.addEventListener('keydown',e=>{if(e.key==='Enter')addTask('month');});
+});
+
+function showApp(){
+  if(!state.events)state.events=[];
+  if(!state.jars)state.jars=JSON.parse(JSON.stringify(DEFAULT.jars));
+  renderHomeQuests();renderBudget();renderJars();renderRecipes();renderGrocery();renderEntries();updateProgress();restoreUI();
+}
+
+async function syncInBackground(){
+  try{
+    setSyncStatus('syncing');
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/garden_data?id=eq.main&select=data`,{
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},
+      signal:AbortSignal.timeout(5000)
+    });
+    if(!r.ok)throw new Error();
+    const rows=await r.json();
+    if(rows?.length>0&&rows[0].data&&Object.keys(rows[0].data).length>0){
+      state={...DEFAULT,...rows[0].data};
+      if(!state.events)state.events=[];
+      if(!state.jars)state.jars=JSON.parse(JSON.stringify(DEFAULT.jars));
+      renderHomeQuests();renderBudget();renderJars();renderRecipes();renderGrocery();renderEntries();updateProgress();restoreUI();
+    }
+    setSyncStatus('synced');
+  }catch(e){
+    setSyncStatus('error');
+  }
+}
+
+function boot(){
+  setDate();setClock();setInterval(setClock,30000);
+  try{
+    const l=localStorage.getItem('lgos');
+    if(l) state={...DEFAULT,...JSON.parse(l)};
+  }catch(_){}
+  showApp();
+  goTo('home');
+  setTimeout(syncInBackground, 200);
+}
+
+document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
